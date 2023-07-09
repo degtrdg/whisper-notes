@@ -1,24 +1,33 @@
 const electron = require("electron");
 const path = require("path");
+const fs = require("fs");
 
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
+const ipcMain = electron.ipcMain;
 
 let mainWindow;
 
 function createWindow() {
-  // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: { nodeIntegration: true, contextIsolation: false },
   });
-  // and load the index.html of the app.
-  console.log(__dirname);
   mainWindow.loadFile(path.join(__dirname, "../build/index.html"));
+  // Open the DevTools.
+  mainWindow.webContents.openDevTools({ mode: "undocked" });
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.on("ready", createWindow);
+
+const rawAudioPath = path.join(__dirname, "raw_audio");
+if (!fs.existsSync(rawAudioPath)) {
+  fs.mkdirSync(rawAudioPath);
+}
+
+ipcMain.on("audio-blob", (event, audioBuffer) => {
+  const audioPath = path.join(rawAudioPath, "audio.wav");
+  fs.writeFileSync(audioPath, audioBuffer);
+  console.log(`Audio saved to: ${audioPath}`); // log the path where audio is saved
+});
