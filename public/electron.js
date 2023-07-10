@@ -1,6 +1,8 @@
 const electron = require("electron");
 const path = require("path");
 const fs = require("fs");
+const transcribeAudioWithWhisperApi = require("./transcribeAudioWithWhisperApi");
+require("dotenv").config();
 
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
@@ -45,17 +47,34 @@ if (!fs.existsSync(transcriptPath)) {
   fs.mkdirSync(transcriptPath);
 }
 
-ipcMain.on("audio-blob", (event, audioBuffer) => {
+ipcMain.on("audio-blob", async (event, audioBuffer) => {
   const audioFilePath = path.join(rawAudioPath, `${Date.now()}.wav`);
   fs.writeFileSync(audioFilePath, audioBuffer);
   console.log(`Audio saved to: ${audioFilePath}`);
 
-  const transcriptFilePath = path.join(transcriptPath, `${Date.now()}.txt`);
-  fs.writeFileSync(
-    transcriptFilePath,
-    `Transcript for audio file: ${audioFilePath}`
+  const transcriptText = await transcribeAudioWithWhisperApi(
+    audioFilePath,
+    process.env.WHISPER_API_KEY
   );
+
+  const transcriptFilePath = path.join(transcriptPath, `${Date.now()}.txt`);
+  fs.writeFileSync(transcriptFilePath, transcriptText);
   console.log(`Transcript saved to: ${transcriptFilePath}`);
 
-  mainWindow.webContents.send("new-transcript", transcriptFilePath);
+  mainWindow.webContents.send("new-transcript", transcriptText);
+});
+
+ipcMain.on("get-all-transcripts", async (event) => {
+  fs.readdir(transcriptPath, (err, files) => {
+    if (err) {
+      console.error("Error reading transcript directory:", err);
+      return;
+    }
+
+    files.forEach((file) => {
+      const transcriptFilePath = path.join(transcriptPath, file);
+      const transcriptText = fs.readFileSync(transcriptFilePath, "utf8");
+      mainWindow.webContents.send("new-transcript", transcriptText);
+    });
+  });
 });
