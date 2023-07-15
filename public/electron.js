@@ -2,6 +2,7 @@ const electron = require("electron");
 const path = require("path");
 const fs = require("fs");
 const transcribeAudioWithWhisperApi = require("./transcribeAudioWithWhisperApi");
+const { clipboard } = require("electron");
 require("dotenv").config();
 
 const app = electron.app;
@@ -62,6 +63,8 @@ ipcMain.on("audio-blob", async (event, audioBuffer) => {
   console.log(`Transcript saved to: ${transcriptFilePath}`);
 
   mainWindow.webContents.send("new-transcript", transcriptText);
+  // Write the transcript text to the system clipboard
+  clipboard.writeText(transcriptText);
 });
 
 ipcMain.on("get-all-transcripts", async (event) => {

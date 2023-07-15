@@ -8,7 +8,7 @@ type TranscriptListProps = {
 
 const TranscriptList: React.FC<TranscriptListProps> = ({ transcripts }) => {
   return (
-    <div className="max-w-lg pt-8 mx-auto pb-15">
+    <div className="max-w-lg pt-8 mx-auto mb-20 pb-15">
       {transcripts.map((transcript, index) => (
         <TranscriptItem key={index} transcript={transcript} />
       ))}

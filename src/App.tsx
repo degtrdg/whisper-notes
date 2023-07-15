@@ -95,13 +95,22 @@ const App: React.FC = () => {
         duration: 0, // Set duration to 0 for now
       };
       setTranscripts((prevTranscripts) => [newTranscript, ...prevTranscripts]);
+
+      // Copy the transcript to the clipboard
+      navigator.clipboard
+        .writeText(transcriptText)
+        .then(() => {
+          console.log("Transcript text copied to clipboard.");
+        })
+        .catch((err) => {
+          console.error("Could not copy text: ", err);
+        });
     });
 
     return () => {
       ipcRenderer.removeAllListeners("new-transcript");
     };
   }, []);
-
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
       const mediaRecorder = new MediaRecorder(stream);
