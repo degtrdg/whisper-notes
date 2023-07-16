@@ -21,7 +21,7 @@ function createWindow() {
     frame: false,
   });
   mainWindow.loadFile(path.join(__dirname, "../build/index.html"));
-  mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools({ mode: "detach" });
 }
 
 app.on("ready", () => {

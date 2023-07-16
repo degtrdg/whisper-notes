@@ -138,6 +138,18 @@ const App: React.FC = () => {
 
   return (
     <div>
+      <div
+        style={
+          {
+            WebkitAppRegion: "drag",
+            height: "20px",
+            backgroundColor: "white",
+            position: "sticky",
+            top: 0,
+            zIndex: 1000,
+          } as React.CSSProperties
+        }
+      ></div>
       <TranscriptList transcripts={transcripts} />
       <RecordingIndicator
         recording={recording}
