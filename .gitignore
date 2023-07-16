@@ -27,3 +27,4 @@ yarn-error.log*
 **/raw_audio
 **/transcripts
 **/dist
+**/api_key.txt

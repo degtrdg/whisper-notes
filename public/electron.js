@@ -4,6 +4,7 @@ const fs = require("fs");
 const transcribeAudioWithWhisperApi = require("./transcribeAudioWithWhisperApi");
 const { clipboard } = require("electron");
 require("dotenv").config();
+const apiKeyPath = path.join(__dirname, "api_key.txt");
 
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
@@ -17,6 +18,7 @@ function createWindow() {
     width: 800,
     height: 600,
     webPreferences: { nodeIntegration: true, contextIsolation: false },
+    frame: false,
   });
   mainWindow.loadFile(path.join(__dirname, "../build/index.html"));
   mainWindow.webContents.openDevTools();
@@ -24,6 +26,12 @@ function createWindow() {
 
 app.on("ready", () => {
   createWindow();
+
+  let apiKey = "";
+  if (fs.existsSync(apiKeyPath)) {
+    apiKey = fs.readFileSync(apiKeyPath, "utf8");
+  }
+  mainWindow.webContents.send("load-api-key-reply", apiKey);
 
   // Register the global shortcut
   globalShortcut.register("CommandOrControl+Shift+X", () => {
@@ -49,20 +57,32 @@ if (!fs.existsSync(transcriptPath)) {
 }
 
 ipcMain.on("audio-blob", async (event, audioBuffer) => {
-  const audioFilePath = path.join(rawAudioPath, `${Date.now()}.wav`);
+  const fileName = Date.now();
+  const audioFilePath = path.join(rawAudioPath, `${fileName}.wav`);
   fs.writeFileSync(audioFilePath, audioBuffer);
   console.log(`Audio saved to: ${audioFilePath}`);
-
+  // Check if API key works and exists in the path
+  let apiKey = "";
+  if (fs.existsSync(apiKeyPath)) {
+    apiKey = fs.readFileSync(apiKeyPath, "utf8");
+  }
+  if (!apiKey) {
+    console.error("API key not found");
+    return;
+  }
   const transcriptText = await transcribeAudioWithWhisperApi(
     audioFilePath,
-    process.env.WHISPER_API_KEY
+    apiKey
   );
 
-  const transcriptFilePath = path.join(transcriptPath, `${Date.now()}.txt`);
+  const transcriptFilePath = path.join(transcriptPath, `${fileName}.txt`);
   fs.writeFileSync(transcriptFilePath, transcriptText);
   console.log(`Transcript saved to: ${transcriptFilePath}`);
 
-  mainWindow.webContents.send("new-transcript", transcriptText);
+  mainWindow.webContents.send("new-transcript", {
+    content: transcriptText,
+    filePath: transcriptFilePath,
+  });
   // Write the transcript text to the system clipboard
   clipboard.writeText(transcriptText);
 });
@@ -77,7 +97,59 @@ ipcMain.on("get-all-transcripts", async (event) => {
     files.forEach((file) => {
       const transcriptFilePath = path.join(transcriptPath, file);
       const transcriptText = fs.readFileSync(transcriptFilePath, "utf8");
-      mainWindow.webContents.send("new-transcript", transcriptText);
+      mainWindow.webContents.send("new-transcript", {
+        content: transcriptText,
+        filePath: transcriptFilePath,
+      });
     });
   });
+});
+
+ipcMain.on("delete-audio-and-transcript", (event, fileNameWithoutExtension) => {
+  const audioFilePath = path.join(
+    rawAudioPath,
+    `${fileNameWithoutExtension}.wav`
+  );
+  const transcriptFilePath = path.join(
+    transcriptPath,
+    `${fileNameWithoutExtension}.txt`
+  );
+
+  try {
+    // Delete audio file
+    if (fs.existsSync(audioFilePath)) {
+      fs.unlinkSync(audioFilePath);
+      console.log(`Audio file deleted: ${audioFilePath}`);
+    } else {
+      console.log(`Audio file does not exist: ${audioFilePath}`);
+    }
+
+    // Delete transcript file
+    if (fs.existsSync(transcriptFilePath)) {
+      fs.unlinkSync(transcriptFilePath);
+      console.log(`Transcript file deleted: ${transcriptFilePath}`);
+    } else {
+      console.log(`Transcript file does not exist: ${transcriptFilePath}`);
+    }
+
+    // Send response back to renderer process
+    mainWindow.webContents.send(
+      "deleted-audio-and-transcript",
+      fileNameWithoutExtension
+    );
+  } catch (err) {
+    console.error(`Error deleting files: ${err}`);
+  }
+});
+
+ipcMain.on("save-api-key", (event, apiKey) => {
+  fs.writeFileSync(apiKeyPath, apiKey, "utf8");
+});
+
+ipcMain.on("load-api-key", (event) => {
+  let apiKey = "";
+  if (fs.existsSync(apiKeyPath)) {
+    apiKey = fs.readFileSync(apiKeyPath, "utf8");
+  }
+  event.reply("load-api-key-reply", apiKey);
 });

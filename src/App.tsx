@@ -88,29 +88,33 @@ const App: React.FC = () => {
     // Request all existing transcripts when the application starts
     ipcRenderer.send("get-all-transcripts");
 
-    ipcRenderer.on("new-transcript", (event: any, transcriptText: string) => {
-      // Update the transcripts state with the new transcript
-      const newTranscript: Transcript = {
-        content: transcriptText,
-        duration: 0, // Set duration to 0 for now
-      };
-      setTranscripts((prevTranscripts) => [newTranscript, ...prevTranscripts]);
+    ipcRenderer.on(
+      "new-transcript",
+      (event: any, newTranscript: { content: string; filePath: string }) => {
+        newTranscript as Transcript;
+        // Update the transcripts state with the new transcript
+        setTranscripts((prevTranscripts) => [
+          newTranscript,
+          ...prevTranscripts,
+        ]);
 
-      // Copy the transcript to the clipboard
-      navigator.clipboard
-        .writeText(transcriptText)
-        .then(() => {
-          console.log("Transcript text copied to clipboard.");
-        })
-        .catch((err) => {
-          console.error("Could not copy text: ", err);
-        });
-    });
+        // Copy the transcript to the clipboard
+        navigator.clipboard
+          .writeText(newTranscript.content)
+          .then(() => {
+            console.log("Transcript text copied to clipboard.");
+          })
+          .catch((err) => {
+            console.error("Could not copy text: ", err);
+          });
+      }
+    );
 
     return () => {
       ipcRenderer.removeAllListeners("new-transcript");
     };
   }, []);
+
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
       const mediaRecorder = new MediaRecorder(stream);
@@ -127,7 +131,9 @@ const App: React.FC = () => {
       recording ? stopRecording() : startRecording();
     };
     ipcRenderer.on("toggle-recording", toggleRecording);
-    return () => ipcRenderer.removeAllListeners("toggle-recording");
+    return () => {
+      ipcRenderer.removeAllListeners("toggle-recording");
+    };
   }, [recording, loading]);
 
   return (
