@@ -1,8 +1,9 @@
 {
-  "name": "Whisper Notes",
+  "name": "whisper-notes",
   "version": "0.1.0",
   "private": true,
   "author": "Daniel George",
+  "description": "A simple voice-to-text clipboard app",
   "dependencies": {
     "@craco/craco": "^7.1.0",
     "@fortawesome/fontawesome-svg-core": "^6.4.0",
@@ -16,6 +17,7 @@
     "@types/react": "^18.2.14",
     "@types/react-dom": "^18.2.6",
     "dotenv": "^16.3.1",
+    "electron-log": "^4.4.8",
     "form-data": "^4.0.0",
     "node-fetch": "^3.3.1",
     "react": "^18.2.0",
@@ -26,12 +28,20 @@
   },
   "build": {
     "appId": "com.daniel.whisper-notes",
+    "productName": "Whisper Notes",
     "mac": {
       "category": "public.app-category.utilities",
       "target": [
         "dmg",
         "zip"
-      ]
+      ],
+      "icon": "build/logo.icns"
+    },
+    "win": {
+      "icon": "build/logo.ico"
+    },
+    "linux": {
+      "icon": "build/logo.png"
     }
   },
   "main": "public/electron.js",

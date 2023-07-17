@@ -1,31 +1,45 @@
 const fs = require("fs");
 const FormData = require("form-data");
+const https = require("https");
+const stream = require("stream");
+const { promisify } = require("util");
 
 async function transcribeAudioWithWhisperApi(audioFilePath, WHISPER_API_KEY) {
-  const fetch = (await import("node-fetch")).default;
-
   const formData = new FormData();
   formData.append("file", fs.createReadStream(audioFilePath));
   formData.append("model", "whisper-1");
 
-  const response = await fetch(
-    "https://api.openai.com/v1/audio/transcriptions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${WHISPER_API_KEY}`,
-      },
-      body: formData,
-    }
-  );
+  const options = {
+    hostname: "api.openai.com",
+    path: "/v1/audio/transcriptions",
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${WHISPER_API_KEY}`,
+      ...formData.getHeaders(),
+    },
+  };
 
-  const data = await response.json();
+  const pipeline = promisify(stream.pipeline);
 
-  if (!response.ok) {
-    throw new Error(data.error || "Error transcribing the audio");
-  }
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => {
+        data += chunk;
+      });
+      res.on("end", () => {
+        if (res.statusCode >= 200 && res.statusCode <= 299) {
+          resolve(JSON.parse(data).text);
+        } else {
+          reject(new Error(`HTTP Error: ${res.statusCode}`));
+        }
+      });
+    });
 
-  return data.text;
+    req.on("error", reject);
+
+    pipeline(formData, req).catch(reject);
+  });
 }
 
 module.exports = transcribeAudioWithWhisperApi;

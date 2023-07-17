@@ -3,8 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const transcribeAudioWithWhisperApi = require("./transcribeAudioWithWhisperApi");
 const { clipboard } = require("electron");
-require("dotenv").config();
-const apiKeyPath = path.join(__dirname, "api_key.txt");
+const log = require("electron-log");
 
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
@@ -12,6 +11,11 @@ const globalShortcut = electron.globalShortcut;
 const ipcMain = electron.ipcMain;
 
 let mainWindow;
+
+// Initialize the paths after app is ready
+let apiKeyPath;
+let rawAudioPath;
+let transcriptPath;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -26,6 +30,21 @@ function createWindow() {
 
 app.on("ready", () => {
   createWindow();
+
+  // Set up the paths using app.getPath
+  const userDataPath = app.getPath("userData");
+  apiKeyPath = path.join(userDataPath, "api_key.txt");
+  rawAudioPath = path.join(userDataPath, "raw_audio");
+  transcriptPath = path.join(userDataPath, "transcripts");
+
+  // Make sure the directories exist
+  if (!fs.existsSync(rawAudioPath)) {
+    fs.mkdirSync(rawAudioPath, { recursive: true });
+  }
+
+  if (!fs.existsSync(transcriptPath)) {
+    fs.mkdirSync(transcriptPath, { recursive: true });
+  }
 
   let apiKey = "";
   if (fs.existsSync(apiKeyPath)) {
@@ -46,21 +65,12 @@ app.on("will-quit", () => {
   globalShortcut.unregisterAll();
 });
 
-const rawAudioPath = path.join(__dirname, "raw_audio");
-if (!fs.existsSync(rawAudioPath)) {
-  fs.mkdirSync(rawAudioPath);
-}
-
-const transcriptPath = path.join(__dirname, "transcripts");
-if (!fs.existsSync(transcriptPath)) {
-  fs.mkdirSync(transcriptPath);
-}
-
 ipcMain.on("audio-blob", async (event, audioBuffer) => {
   const fileName = Date.now();
   const audioFilePath = path.join(rawAudioPath, `${fileName}.wav`);
   fs.writeFileSync(audioFilePath, audioBuffer);
   console.log(`Audio saved to: ${audioFilePath}`);
+  log.info(`Audio saved to: ${audioFilePath}`);
   // Check if API key works and exists in the path
   let apiKey = "";
   if (fs.existsSync(apiKeyPath)) {
@@ -68,16 +78,29 @@ ipcMain.on("audio-blob", async (event, audioBuffer) => {
   }
   if (!apiKey) {
     console.error("API key not found");
+    log.error("API key not found");
     return;
   }
-  const transcriptText = await transcribeAudioWithWhisperApi(
-    audioFilePath,
-    apiKey
-  );
+
+  let transcriptText;
+  try {
+    transcriptText = await transcribeAudioWithWhisperApi(audioFilePath, apiKey);
+  } catch (error) {
+    console.error("Error during transcription:", error);
+    log.error("Error during transcription:", error);
+    return;
+  }
 
   const transcriptFilePath = path.join(transcriptPath, `${fileName}.txt`);
-  fs.writeFileSync(transcriptFilePath, transcriptText);
-  console.log(`Transcript saved to: ${transcriptFilePath}`);
+  try {
+    fs.writeFileSync(transcriptFilePath, transcriptText);
+    console.log(`Transcript saved to: ${transcriptFilePath}`);
+    log.info(`Transcript saved to: ${transcriptFilePath}`);
+  } catch (err) {
+    console.error(`Error writing the transcript file: ${err}`);
+    log.error(`Error writing the transcript file: ${err}`);
+    return;
+  }
 
   mainWindow.webContents.send("new-transcript", {
     content: transcriptText,
@@ -120,16 +143,20 @@ ipcMain.on("delete-audio-and-transcript", (event, fileNameWithoutExtension) => {
     if (fs.existsSync(audioFilePath)) {
       fs.unlinkSync(audioFilePath);
       console.log(`Audio file deleted: ${audioFilePath}`);
+      log.info(`Audio file deleted: ${audioFilePath}`);
     } else {
       console.log(`Audio file does not exist: ${audioFilePath}`);
+      log.error(`Audio file does not exist: ${audioFilePath}`);
     }
 
     // Delete transcript file
     if (fs.existsSync(transcriptFilePath)) {
       fs.unlinkSync(transcriptFilePath);
       console.log(`Transcript file deleted: ${transcriptFilePath}`);
+      log.info(`Transcript file deleted: ${transcriptFilePath}`);
     } else {
       console.log(`Transcript file does not exist: ${transcriptFilePath}`);
+      log.error(`Transcript file does not exist: ${transcriptFilePath}`);
     }
 
     // Send response back to renderer process
@@ -139,6 +166,7 @@ ipcMain.on("delete-audio-and-transcript", (event, fileNameWithoutExtension) => {
     );
   } catch (err) {
     console.error(`Error deleting files: ${err}`);
+    log.error(`Error deleting files: ${err}`);
   }
 });
 
