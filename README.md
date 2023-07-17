@@ -9,6 +9,7 @@ Whisper Notes is a simple voice-to-text clipboard application. With a quick keyb
 - **Effortless Transcription**: Press Command-Shift-X (Mac) or Control-Shift-X (Windows/Linux) to start your transcription. Press the same keys to stop.
 - **Automatic Clipboard Insertion**: Once your transcription is done, it's immediately ready in your clipboard.
 - **Transcription History**: Past transcripts are also stored within the app for quick reference.
+- **Expandable Transcripts**: Double-click on any transcript in your history to expand it for easier reading. Press Escape to collapse it back down.
 - **Easy Deletion**: You can easily delete previous transcripts.
 
 ## Getting Started
