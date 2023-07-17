@@ -1,6 +1,8 @@
 # Whisper Notes
 
-![Whisper Notes Logo](public/logo.png)
+<div align="center">
+  <img src="public/logo.png" alt="WhisperNotes Logo" width="200" height="200">
+</div>
 
 Whisper Notes is a simple voice-to-text clipboard application. With a quick keyboard shortcut, you can begin transcribing audio and have the results automatically placed in your clipboard. Whisper Notes also stores your transcriptions within the app, allowing for easy access and organization of past notes.
 
