@@ -31,8 +31,8 @@ const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript }) => {
   const handleDelete = (event: React.MouseEvent) => {
     event.stopPropagation();
     const filenameWithoutExtension = path.basename(
-      transcript.filePath,
-      path.extname(transcript.filePath)
+      transcript.transcriptFilePath,
+      path.extname(transcript.transcriptFilePath)
     );
     ipcRenderer.send("delete-audio-and-transcript", filenameWithoutExtension);
     setIsDeleted(true);

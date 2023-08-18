@@ -69,7 +69,6 @@ ipcMain.on("audio-blob", async (event, audioBuffer) => {
   const fileName = Date.now();
   const audioFilePath = path.join(rawAudioPath, `${fileName}.wav`);
   fs.writeFileSync(audioFilePath, audioBuffer);
-  console.log(`Audio saved to: ${audioFilePath}`);
   log.info(`Audio saved to: ${audioFilePath}`);
   // Check if API key works and exists in the path
   let apiKey = "";
@@ -77,7 +76,6 @@ ipcMain.on("audio-blob", async (event, audioBuffer) => {
     apiKey = fs.readFileSync(apiKeyPath, "utf8");
   }
   if (!apiKey) {
-    console.error("API key not found");
     log.error("API key not found");
     return;
   }
@@ -86,7 +84,6 @@ ipcMain.on("audio-blob", async (event, audioBuffer) => {
   try {
     transcriptText = await transcribeAudioWithWhisperApi(audioFilePath, apiKey);
   } catch (error) {
-    console.error("Error during transcription:", error);
     log.error("Error during transcription:", error);
     return;
   }
@@ -94,17 +91,15 @@ ipcMain.on("audio-blob", async (event, audioBuffer) => {
   const transcriptFilePath = path.join(transcriptPath, `${fileName}.txt`);
   try {
     fs.writeFileSync(transcriptFilePath, transcriptText);
-    console.log(`Transcript saved to: ${transcriptFilePath}`);
     log.info(`Transcript saved to: ${transcriptFilePath}`);
   } catch (err) {
-    console.error(`Error writing the transcript file: ${err}`);
     log.error(`Error writing the transcript file: ${err}`);
     return;
   }
 
   mainWindow.webContents.send("new-transcript", {
     content: transcriptText,
-    filePath: transcriptFilePath,
+    transcriptFilePath: transcriptFilePath,
   });
   // Write the transcript text to the system clipboard
   clipboard.writeText(transcriptText);
@@ -113,7 +108,6 @@ ipcMain.on("audio-blob", async (event, audioBuffer) => {
 ipcMain.on("get-all-transcripts", async (event) => {
   fs.readdir(transcriptPath, (err, files) => {
     if (err) {
-      console.error("Error reading transcript directory:", err);
       return;
     }
 
@@ -122,7 +116,7 @@ ipcMain.on("get-all-transcripts", async (event) => {
       const transcriptText = fs.readFileSync(transcriptFilePath, "utf8");
       mainWindow.webContents.send("new-transcript", {
         content: transcriptText,
-        filePath: transcriptFilePath,
+        transcriptFilePath: transcriptFilePath,
       });
     });
   });
@@ -142,20 +136,16 @@ ipcMain.on("delete-audio-and-transcript", (event, fileNameWithoutExtension) => {
     // Delete audio file
     if (fs.existsSync(audioFilePath)) {
       fs.unlinkSync(audioFilePath);
-      console.log(`Audio file deleted: ${audioFilePath}`);
       log.info(`Audio file deleted: ${audioFilePath}`);
     } else {
-      console.log(`Audio file does not exist: ${audioFilePath}`);
       log.error(`Audio file does not exist: ${audioFilePath}`);
     }
 
     // Delete transcript file
     if (fs.existsSync(transcriptFilePath)) {
       fs.unlinkSync(transcriptFilePath);
-      console.log(`Transcript file deleted: ${transcriptFilePath}`);
       log.info(`Transcript file deleted: ${transcriptFilePath}`);
     } else {
-      console.log(`Transcript file does not exist: ${transcriptFilePath}`);
       log.error(`Transcript file does not exist: ${transcriptFilePath}`);
     }
 
@@ -165,7 +155,6 @@ ipcMain.on("delete-audio-and-transcript", (event, fileNameWithoutExtension) => {
       fileNameWithoutExtension
     );
   } catch (err) {
-    console.error(`Error deleting files: ${err}`);
     log.error(`Error deleting files: ${err}`);
   }
 });

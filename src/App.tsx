@@ -87,10 +87,14 @@ const App: React.FC = () => {
   useEffect(() => {
     // Request all existing transcripts when the application starts
     ipcRenderer.send("get-all-transcripts");
-
+  }, []);
+  useEffect(() => {
     ipcRenderer.on(
       "new-transcript",
-      (event: any, newTranscript: { content: string; filePath: string }) => {
+      (
+        event: any,
+        newTranscript: { content: string; transcriptFilePath: string }
+      ) => {
         newTranscript as Transcript;
         // Update the transcripts state with the new transcript
         setTranscripts((prevTranscripts) => [
@@ -113,7 +117,7 @@ const App: React.FC = () => {
     return () => {
       ipcRenderer.removeAllListeners("new-transcript");
     };
-  }, []);
+  }, [loading]);
 
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
