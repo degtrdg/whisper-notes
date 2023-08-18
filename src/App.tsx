@@ -15,11 +15,15 @@ const App: React.FC = () => {
   const [recording, setRecording] = useState(false);
   const [loading, setLoading] = useState(true);
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
+  const [lastTranscript, setLastTranscript] = useState<Transcript>();
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<BlobPart[]>([]);
   const warmUpRef = useRef<boolean>(true);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null); // <- Reference to store the interval ID
+  // Add new state variables for status and message
+  const [transcriptionStatus, setTranscriptionStatus] = useState("");
+  const [transcriptionMessage, setTranscriptionMessage] = useState("");
 
   const startRecording = () => {
     recordedChunksRef.current = [];
@@ -44,6 +48,7 @@ const App: React.FC = () => {
       recordingIntervalRef.current = null;
     }
 
+    setLoading(true);
     // Reset the duration
     setRecordingDuration(0);
   };
@@ -110,22 +115,15 @@ const App: React.FC = () => {
         ]);
         console.log(newTranscript);
 
-        // Copy the transcript to the clipboard
-        navigator.clipboard
-          .writeText(newTranscript.content)
-          .then(() => {
-            console.log("Transcript text copied to clipboard.");
-          })
-          .catch((err) => {
-            console.error("Could not copy text: ", err);
-          });
+        setLastTranscript(newTranscript);
+        setLoading(false);
       }
     );
 
     return () => {
       ipcRenderer.removeAllListeners("new-transcript");
     };
-  }, [loading]);
+  }, [loading, recording]);
 
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
@@ -166,6 +164,8 @@ const App: React.FC = () => {
       <RecordingIndicator
         recording={recording}
         recordingDuration={recordingDuration}
+        transcript={lastTranscript}
+        loading={loading}
       />
     </div>
   );

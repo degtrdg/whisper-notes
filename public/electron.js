@@ -2,7 +2,7 @@ const electron = require("electron");
 const path = require("path");
 const fs = require("fs");
 const transcribeAudioWithWhisperApi = require("./transcribeAudioWithWhisperApi");
-const { clipboard } = require("electron");
+const { clipboard, shell } = require("electron"); // Import shell from electron
 const log = require("electron-log");
 
 const app = electron.app;
@@ -203,4 +203,9 @@ ipcMain.on("load-api-key", (event) => {
     apiKey = fs.readFileSync(apiKeyPath, "utf8");
   }
   event.reply("load-api-key-reply", apiKey);
+});
+
+// Add new ipc listener to open file with default application
+ipcMain.on("open-file", (event, filePath) => {
+  shell.showItemInFolder(filePath);
 });
