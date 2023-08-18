@@ -88,12 +88,19 @@ const App: React.FC = () => {
     // Request all existing transcripts when the application starts
     ipcRenderer.send("get-all-transcripts");
   }, []);
+
   useEffect(() => {
     ipcRenderer.on(
       "new-transcript",
       (
         event: any,
-        newTranscript: { content: string; transcriptFilePath: string }
+        newTranscript: {
+          status: string;
+          message: string;
+          content: string;
+          transcriptFilePath: string;
+          audioFilePath: string;
+        }
       ) => {
         newTranscript as Transcript;
         // Update the transcripts state with the new transcript
@@ -101,6 +108,7 @@ const App: React.FC = () => {
           newTranscript,
           ...prevTranscripts,
         ]);
+        console.log(newTranscript);
 
         // Copy the transcript to the clipboard
         navigator.clipboard
