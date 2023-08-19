@@ -55,15 +55,13 @@ const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript }) => {
     ? "bg-gray-200 text-gray-500"
     : "bg-white shadow rounded-lg p-6 mb-4 cursor-pointer flex justify-between items-start hover:bg-gray-100";
 
-  if (isDeleted) {
+  if (isDeleted || transcript.content === "") {
     return null; // or return <></>; for an empty fragment
   }
 
   return (
     <div
-      onDoubleClick={
-        !isDeleted || transcript.content === "" ? handleExpand : undefined
-      }
+      onDoubleClick={!isDeleted ? handleExpand : undefined}
       className={classNames}
     >
       <div className="flex-grow">
