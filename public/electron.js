@@ -4,6 +4,7 @@ const fs = require("fs");
 const transcribeAudioWithWhisperApi = require("./transcribeAudioWithWhisperApi");
 const { clipboard, shell } = require("electron"); // Import shell from electron
 const log = require("electron-log");
+const robot = require("robotjs");
 
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
@@ -126,6 +127,7 @@ ipcMain.on("audio-blob", async (event, audioBuffer) => {
   });
   // Write the transcript text to the system clipboard
   clipboard.writeText(transcriptText);
+  robot.typeString(transcriptText);
 });
 
 ipcMain.on("get-all-transcripts", async (event) => {

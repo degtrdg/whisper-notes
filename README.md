@@ -26,6 +26,18 @@ Follow these simple steps to get Whisper Notes up and running:
 
 Note: As of now, Whisper Notes is only available for Mac. If you'd like to contribute to making Whisper Notes available on other operating systems, please feel free to submit a Pull Request!
 
+## Building from Source
+
+To build the application from source, follow these steps:
+
+1. Clone the repository to your local machine.
+2. Navigate to the project directory.
+3. Run `npm install` to install all the necessary dependencies.
+4. After the installation is complete, run `npm run build` to build the project.
+5. Once the build is complete, run `npm run dist` to create the distributable.
+6. Navigate to the `dist` folder.
+7. Click on the application to launch it.
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. In particular, if you're interested in creating builds for other operating systems, your contributions would be very welcome!
