@@ -73,18 +73,24 @@ const App: React.FC = () => {
   };
 
   const handleStop = () => {
+    console.log("handleStop called, warmUpRef.current:", warmUpRef.current); // Debug log
     if (!warmUpRef.current) {
       const blob = new Blob(recordedChunksRef.current, { type: "audio/wav" });
       sendBlobToBackend(blob);
+    } else {
+      console.log("Warm-up recording, not sending to backend.");
     }
     recordedChunksRef.current = [];
   };
 
   const warmUpMediaRecorder = (mediaRecorder: MediaRecorder) => {
+    console.log("warmUpMediaRecorder called"); // Debug log
     mediaRecorder.start();
     setTimeout(() => {
       mediaRecorder.stop();
+      console.log("warmUpMediaRecorder: mediaRecorder stopped"); // Debug log
       warmUpRef.current = false;
+      console.log("warmUpMediaRecorder: warmUpRef.current set to false"); // Debug log
       setLoading(false);
     }, 100);
   };

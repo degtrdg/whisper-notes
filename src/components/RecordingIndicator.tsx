@@ -91,7 +91,7 @@ const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({
               ●
             </span>
             <span>Not recording</span>
-            {transcript && transcript.status === "success" && (
+            {transcript && (
               <FaPlay
                 onClick={openAudioFile}
                 className="ml-2 cursor-pointer hover:text-blue-500"

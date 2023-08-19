@@ -61,7 +61,9 @@ const TranscriptItem: React.FC<TranscriptItemProps> = ({ transcript }) => {
 
   return (
     <div
-      onDoubleClick={!isDeleted ? handleExpand : undefined}
+      onDoubleClick={
+        !isDeleted || transcript.content === "" ? handleExpand : undefined
+      }
       className={classNames}
     >
       <div className="flex-grow">
