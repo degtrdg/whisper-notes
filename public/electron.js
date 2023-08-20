@@ -127,7 +127,12 @@ ipcMain.on("audio-blob", async (event, audioBuffer) => {
   });
   // Write the transcript text to the system clipboard
   clipboard.writeText(transcriptText);
-  robot.typeString(transcriptText);
+  if (process.platform === "darwin") {
+    robot.keyTap("v", ["command"]);
+  } else {
+    robot.keyTap("v", ["control"]);
+  }
+  console.log("Transcript pasted");
 });
 
 ipcMain.on("get-all-transcripts", async (event) => {
